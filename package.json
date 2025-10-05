@@ -1,0 +1,13 @@
+{
+  "name": "nasa-aqi-frontend",
+  "version": "1.0.0",
+  "description": "NASA TEMPO Air Quality Intelligence Platform - Frontend",
+  "main": "index.html",
+  "scripts": {
+    "build": "echo 'Static site - no build needed'",
+    "start": "echo 'Static site - no start needed'"
+  },
+  "keywords": ["nasa", "tempo", "air-quality", "aqi", "satellite"],
+  "author": "Asadp3406",
+  "license": "MIT"
+}

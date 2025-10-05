@@ -43,15 +43,15 @@ const demoData = {
 
 // Override API calls for demo
 const originalFetch = window.fetch;
-window.fetch = function(url, options) {
+window.fetch = function (url, options) {
     if (url.includes('/api/forecast')) {
         return new Promise((resolve) => {
             setTimeout(() => {
                 const requestData = JSON.parse(options.body);
                 const city = requestData.city?.toLowerCase() || '';
-                
+
                 let responseData = demoData['london']; // Default
-                
+
                 if (city.includes('delhi') || city.includes('new delhi')) {
                     responseData = demoData['new delhi'];
                 } else if (city.includes('beijing')) {
@@ -59,7 +59,7 @@ window.fetch = function(url, options) {
                 } else if (city.includes('mumbai')) {
                     responseData = { ...demoData['new delhi'], city: 'Mumbai, India', current_aqi: 89 };
                 }
-                
+
                 resolve({
                     ok: true,
                     status: 200,
@@ -68,7 +68,7 @@ window.fetch = function(url, options) {
             }, 1000); // Simulate network delay
         });
     }
-    
+
     return originalFetch.apply(this, arguments);
 };
 
@@ -142,7 +142,7 @@ function generateDemoHealth(level) {
             vulnerable_groups: ['Children', 'Elderly', 'People with asthma or COPD']
         }
     };
-    
+
     return healthData[level] || healthData.moderate;
 }
 
@@ -165,7 +165,7 @@ function getAQIColor(aqi) {
 }
 
 // Add demo banner
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const header = document.querySelector('.header-content');
     if (header) {
         const demoBanner = document.createElement('div');
