@@ -1,0 +1,9 @@
+# Root requirements for deployment services
+Flask==2.3.3
+Flask-CORS==4.0.0
+requests==2.31.0
+pandas>=1.5.0
+matplotlib>=3.5.0
+python-dateutil==2.8.2
+numpy>=1.21.0
+gunicorn==21.2.0
