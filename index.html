@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AQI Forecast - Air Quality Monitor</title>
+    <link rel="stylesheet" href="style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <!-- Using Leaflet with multiple tile providers for better reliability -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-wind"></i>
+                    <h1>AQI Forecast</h1>
+                </div>
+                <p class="subtitle">Real-time Air Quality Index monitoring and 48-hour forecasting</p>
+            </div>
+        </header>
+
+        <!-- Search Section -->
+        <section class="search-section">
+            <div class="search-container">
+                <div class="search-options">
+                    <div class="search-box">
+                        <i class="fas fa-search"></i>
+                        <input type="text" id="cityInput" placeholder="Enter city name (e.g., New Delhi, India)" />
+                        <button id="searchBtn" class="search-btn">
+                            <span class="btn-text">Get Forecast</span>
+                            <div class="loading-spinner" style="display: none;">
+                                <i class="fas fa-spinner fa-spin"></i>
+                            </div>
+                        </button>
+                    </div>
+                    <div class="location-section">
+                        <button id="currentLocationBtn" class="location-btn">
+                            <i class="fas fa-location-arrow"></i>
+                            <span>Use My Location</span>
+                            <div class="location-loading" style="display: none;">
+                                <i class="fas fa-spinner fa-spin"></i>
+                            </div>
+                        </button>
+                        <span class="location-status" id="locationStatus"></span>
+                    </div>
+                </div>
+                <div class="quick-cities">
+                    <span>Quick search:</span>
+                    <button class="city-tag" data-city="New Delhi, India">Delhi</button>
+                    <button class="city-tag" data-city="Mumbai, India">Mumbai</button>
+                    <button class="city-tag" data-city="Beijing, China">Beijing</button>
+                    <button class="city-tag" data-city="Los Angeles, USA">LA</button>
+                    <button class="city-tag" data-city="London, UK">London</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Results Section -->
+        <section class="results-section" id="resultsSection" style="display: none;">
+            <!-- Current AQI Card -->
+            <div class="current-aqi-card">
+                <div class="card-header">
+                    <h2 id="cityName">Loading...</h2>
+                    <span class="update-time">Updated: <span id="updateTime"></span></span>
+                </div>
+                <div class="aqi-display">
+                    <div class="aqi-value" id="currentAQI">--</div>
+                    <div class="aqi-category" id="currentCategory">Loading...</div>
+                </div>
+                <div class="aqi-description" id="aqiDescription">
+                    Fetching air quality data...
+                </div>
+            </div>
+
+            <!-- Map and Chart Section -->
+            <div class="data-visualization">
+                <div class="map-section">
+                    <h3><i class="fas fa-map-marked-alt"></i> Location & AQI Map</h3>
+                    <div class="map-container">
+                        <div id="aqiMap" class="aqi-map">
+                            <div id="mapFallback" class="map-fallback" style="display: none;">
+                                <div class="fallback-content">
+                                    <i class="fas fa-globe-americas"></i>
+                                    <h4>Global AQI Monitoring</h4>
+                                    <p>Interactive map is loading...</p>
+                                    <p>You can search for any city or use GPS location above.</p>
+                                    <button onclick="location.reload()" class="retry-map-btn">
+                                        <i class="fas fa-redo"></i> Retry Map Loading
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="map-controls">
+                            <button id="centerMapBtn" class="map-control-btn" title="Center on current location">
+                                <i class="fas fa-crosshairs"></i>
+                            </button>
+                            <div class="map-legend">
+                                <div class="legend-title">AQI Levels</div>
+                                <div class="map-legend-items">
+                                    <div class="map-legend-item">
+                                        <div class="legend-color" style="background: #00E400;"></div>
+                                        <span>Good (0-50)</span>
+                                    </div>
+                                    <div class="map-legend-item">
+                                        <div class="legend-color" style="background: #FFFF00;"></div>
+                                        <span>Moderate (51-100)</span>
+                                    </div>
+                                    <div class="map-legend-item">
+                                        <div class="legend-color" style="background: #FF7E00;"></div>
+                                        <span>Unhealthy for Sensitive (101-150)</span>
+                                    </div>
+                                    <div class="map-legend-item">
+                                        <div class="legend-color" style="background: #FF0000;"></div>
+                                        <span>Unhealthy (151-200)</span>
+                                    </div>
+                                    <div class="map-legend-item">
+                                        <div class="legend-color" style="background: #8F3F97;"></div>
+                                        <span>Very Unhealthy (201-300)</span>
+                                    </div>
+                                    <div class="map-legend-item">
+                                        <div class="legend-color" style="background: #7E0023;"></div>
+                                        <span>Hazardous (301+)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="chart-section">
+                    <h3><i class="fas fa-chart-line"></i> 48-Hour Forecast</h3>
+                    <div class="chart-container">
+                        <img id="forecastChart" src="" alt="AQI Forecast Chart" style="display: none;" />
+                        <div class="chart-loading" id="chartLoading">
+                            <i class="fas fa-spinner fa-spin"></i>
+                            <p>Generating forecast chart...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Forecast Table -->
+            <div class="forecast-table-section">
+                <h3><i class="fas fa-table"></i> Detailed Forecast</h3>
+                <div class="table-container">
+                    <table class="forecast-table">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>AQI</th>
+                                <th>Category</th>
+                                <th>PM2.5</th>
+                                <th>PM10</th>
+                            </tr>
+                        </thead>
+                        <tbody id="forecastTableBody">
+                            <!-- Dynamic content -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Advanced Features Section -->
+            <div class="advanced-features">
+                <!-- TEMPO Integration -->
+                <div class="feature-card">
+                    <h3><i class="fas fa-satellite"></i> NASA TEMPO Integration</h3>
+                    <div class="tempo-data" id="tempoData" style="display: none;">
+                        <div class="satellite-metrics">
+                            <div class="metric">
+                                <span class="metric-label">NO₂ Column</span>
+                                <span class="metric-value" id="no2Column">--</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Aerosol Optical Depth</span>
+                                <span class="metric-value" id="aodValue">--</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Data Quality</span>
+                                <span class="metric-value" id="dataQuality">--</span>
+                            </div>
+                        </div>
+                        <div class="correlation-info">
+                            <p><strong>Satellite-Ground Correlation:</strong> <span id="correlationScore">--</span></p>
+                            <p><strong>Enhanced Accuracy:</strong> <span id="enhancedAccuracy">--</span></p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Health Assessment -->
+                <div class="feature-card">
+                    <h3><i class="fas fa-heartbeat"></i> Health Risk Assessment</h3>
+                    <div class="health-assessment" id="healthAssessment" style="display: none;">
+                        <div class="risk-level">
+                            <span class="risk-label">Risk Level:</span>
+                            <span class="risk-value" id="riskLevel">--</span>
+                        </div>
+                        <div class="recommendations" id="healthRecommendations">
+                            <!-- Dynamic recommendations -->
+                        </div>
+                        <div class="vulnerable-groups" id="vulnerableGroups">
+                            <!-- Dynamic vulnerable groups -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ML Enhancement -->
+                <div class="feature-card">
+                    <h3><i class="fas fa-brain"></i> AI/ML Enhancement</h3>
+                    <div class="ml-info" id="mlInfo" style="display: none;">
+                        <div class="ml-metrics">
+                            <div class="metric">
+                                <span class="metric-label">Confidence Score</span>
+                                <span class="metric-value" id="mlConfidence">--</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Prediction Accuracy</span>
+                                <span class="metric-value" id="mlAccuracy">--</span>
+                            </div>
+                            <div class="metric">
+                                <span class="metric-label">Ensemble Models</span>
+                                <span class="metric-value" id="ensembleModels">--</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Notifications -->
+                <div class="feature-card">
+                    <h3><i class="fas fa-bell"></i> Smart Notifications</h3>
+                    <div class="notification-setup">
+                        <button id="enableNotifications" class="notification-btn">
+                            <i class="fas fa-bell"></i>
+                            Enable Alerts
+                        </button>
+                        <div class="notification-settings" id="notificationSettings" style="display: none;">
+                            <div class="setting-group">
+                                <label>Alert Threshold (AQI):</label>
+                                <input type="range" id="aqiThreshold" min="50" max="200" value="100">
+                                <span id="thresholdValue">100</span>
+                            </div>
+                            <div class="setting-group">
+                                <label>Health Conditions:</label>
+                                <div class="health-conditions">
+                                    <label><input type="checkbox" value="asthma"> Asthma</label>
+                                    <label><input type="checkbox" value="copd"> COPD</label>
+                                    <label><input type="checkbox" value="heart_disease"> Heart Disease</label>
+                                    <label><input type="checkbox" value="pregnancy"> Pregnancy</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="active-alerts" id="activeAlerts" style="display: none;">
+                        <!-- Dynamic alerts -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- AQI Legend -->
+            <div class="aqi-legend">
+                <h3><i class="fas fa-info-circle"></i> AQI Scale</h3>
+                <div class="legend-items">
+                    <div class="legend-item good">
+                        <div class="color-box"></div>
+                        <span class="range">0-50</span>
+                        <span class="label">Good</span>
+                    </div>
+                    <div class="legend-item moderate">
+                        <div class="color-box"></div>
+                        <span class="range">51-100</span>
+                        <span class="label">Moderate</span>
+                    </div>
+                    <div class="legend-item unhealthy-sensitive">
+                        <div class="color-box"></div>
+                        <span class="range">101-150</span>
+                        <span class="label">Unhealthy for Sensitive Groups</span>
+                    </div>
+                    <div class="legend-item unhealthy">
+                        <div class="color-box"></div>
+                        <span class="range">151-200</span>
+                        <span class="label">Unhealthy</span>
+                    </div>
+                    <div class="legend-item very-unhealthy">
+                        <div class="color-box"></div>
+                        <span class="range">201-300</span>
+                        <span class="label">Very Unhealthy</span>
+                    </div>
+                    <div class="legend-item hazardous">
+                        <div class="color-box"></div>
+                        <span class="range">301+</span>
+                        <span class="label">Hazardous</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Error Section -->
+        <section class="error-section" id="errorSection" style="display: none;">
+            <div class="error-card">
+                <i class="fas fa-exclamation-triangle"></i>
+                <h3>Oops! Something went wrong</h3>
+                <p id="errorMessage">Unable to fetch air quality data. Please try again.</p>
+                <button id="retryBtn" class="retry-btn">Try Again</button>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>&copy; 2025 NASA TEMPO Air Quality Intelligence Platform. Data provided by Open-Meteo API.</p>
+            <p>Advanced AI-powered air quality monitoring for public health protection</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
